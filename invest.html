@@ -1,0 +1,50 @@
+const cryptoData = [
+    { platform: 'Ethena', assets: 'USDe', amount: 2500, apy: 15.0 },
+    { platform: 'Pendle', assets: 'PENDLE', amount: 2500, apy: 20.0 },
+    { platform: 'GMX', assets: 'GMX', amount: 2500, apy: 25.0 },
+    { platform: 'LIT', assets: 'LIT', amount: 2500, apy: 18.0 },
+];
+
+const assetIds = {
+    'USDe': 'usd-stablecoin-by-ethena',
+    'PENDLE': 'pendle',
+    'GMX': 'gmx',
+    'LIT': 'litentry',
+};
+
+const assetIdsToFetch = cryptoData.map(item => assetIds[item.assets]).filter(id => id);
+
+fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${assetIdsToFetch.join(',')}&vs_currencies=usd`)
+    .then(response => response.json())
+    .then(prices => {
+        const results = [];
+        cryptoData.forEach(item => {
+            const price = prices[assetIds[item.assets]]?.usd;
+            const currentValue = price ? price * item.amount : 'N/A';
+            results.push({
+                platform: item.platform,
+                assets: item.assets,
+                price: price,
+                value: currentValue
+            });
+        });
+        // Send the 'results' array to Zapier via the webhook.
+        fetch('<YOUR_ZAPIER_WEBHOOK_URL>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(results)
+        });
+
+        let output = '<ul>';
+        results.forEach(item => {
+            output += `<li><span class="math-inline">\{item\.platform\} \(</span>{item.assets}): Price = $${item.price || 'N/A'}, Value = $${item.value}</li>`;
+        });
+        output += '</ul>';
+        document.getElementById('crypto-data').innerHTML = output;
+
+    })
+    .catch(error => {
+        document.getElementById('crypto-data').innerHTML = `<p>Error fetching data: ${error}</p>`;
+    });
