@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/update.py": {
-      "runtime": "python3.9"
+      "runtime": "python4.10"
     }
   }
 }
